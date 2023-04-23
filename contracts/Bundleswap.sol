@@ -1,8 +1,16 @@
-pragma solidity 0.8.8;
+pragma solidity 0.8.18;
 
 interface IERC20{
-    function transferFrom(address sender, address recipient, uint256 amount)external returns(bool);
+    // function transferFrom(address sender, address recipient, uint256 amount)external returns(bool);
     function approve(address spender, uint256 amount) external returns (bool);
+    function transfer(address,uint256)external returns(bool);
+
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
 
 }
 
@@ -15,14 +23,14 @@ interface IUniswapRouter{
         uint deadline
     ) external returns (uint[] memory amounts);
 
-    function getAmountsOut(uint amountIn, address[] memory path) external returns (uint[] memory amounts) {
+    function getAmountsOut(uint amountIn, address[] memory path) external returns (uint[] memory amounts);
 
 }
 
 contract BundleSwap{
     //Addresses
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address private constant WETH = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
 
     // Pool id
     uint256 internal counter;
@@ -78,8 +86,14 @@ contract BundleSwap{
         return poolBalance[id];
     }
 
+    // function to approve token transfer
+    function approveToken(address _token,uint256 amount) public {
+        bool safe = IERC20(_token).approve(address(this),amount);
+        require(safe == true, "Token not approved");
+    }
+
     // Register swap request (TokenA => TokenB)  (Note amount in 18 decimal precision)
-    function registerSwap(address tokenA, address tokenB, uint256 amountA, uint256 amountB, uint256 aggregationTime) public{
+    function registerSwap(address tokenA, address tokenB, uint256 amountA, uint256 amountB, uint256 aggregationTime) public {
 
         // Sort tokens
         // (address _token0, address _token1) = sort(tokenA,tokenB);
@@ -105,10 +119,8 @@ contract BundleSwap{
             poolBalance[poolId] += _amount0;
 
             // Transfer Token A and Token B to the contract
-            bool safe = IERC20(_token0).transferFrom(msg.sender,address(this),_amount0);
-            require(safe == true,"Token0 transfer failed");
-            // safe = IERC20(_token1).transferFrom(msg.sender,address(this),_amount1);
-            // require(safe == true,"Token0 transfer failed");
+            bool success = IERC20(_token0).transferFrom(msg.sender,address(this),_amount0);
+            require(success == true,"Token0 transfer failed");
 
             // Emit event
             emit tokenDeposited(poolId,msg.sender,_token0,_token1,_amount0);
@@ -133,9 +145,7 @@ contract BundleSwap{
             poolBalance[poolId] += _amount0;
 
             // Transfer Token A and Token B to the contract
-            bool safe = IERC20(_token0).transferFrom(msg.sender,address(this),_amount0);
-            require(safe == true,"Token0 transfer failed");
-            // safe = IERC20(_token1).transferFrom(msg.sender,address(this),_amount1);
+            IERC20(_token0).transferFrom(msg.sender,address(this),_amount0);
             // require(safe == true,"Token0 transfer failed");
 
             // Emit event
@@ -172,7 +182,7 @@ contract BundleSwap{
         require(pool[tokenA][tokenB].aggregationTime < timeDiff,"Time has not expired. Wait for the pool time to expire");
         
         // Get pool id
-        uint256 _poolId = getPoolId(_token0,_token1);            
+        uint256 _poolId = getPoolId(tokenA,tokenB);            
         uint256 _tokenBalance = getPoolBalance(_poolId);
 
         // Approve Router the token for the swap
@@ -192,7 +202,7 @@ contract BundleSwap{
             path[2] = tokenB;
         }
 
-        uint[] memory amounts = swapExactTokensForTokens(_tokenBalance,amountOutMin,path,address(this),block.timestamp);
+        uint[] memory amounts = IUniswapRouter(UNISWAP_V2_ROUTER).swapExactTokensForTokens(_tokenBalance,amountOutmin,path,address(this),block.timestamp);
         uint256 _outputAmount = tokenA == WETH? amounts[1]:amounts[2];
         
         // Emit event
@@ -200,6 +210,12 @@ contract BundleSwap{
 
         // Return the token to the respective depositors
         batchTransfer(userList[_poolId],_poolId,tokenB,_outputAmount);
+
+        // Delete pool data
+        delete pool[tokenA][tokenB];
+        delete poolBalance[_poolId];
+        // delete balances; (requires loop)
+        delete userList[_poolId];
 
         // Return amount of tokenB received from the swap
         return _outputAmount;
@@ -227,25 +243,25 @@ contract BundleSwap{
             // (20 bps * 250*10^18)  / 10000 => 5 *10^17 => 0.2% => 0.5 tokens 
             
             // Transfer tokens
-            bool safe = IERC20(outputToken).transfer(recipient,tokenToReceive);
+            (bool safe) = IERC20(outputToken).transfer(recepient,tokenToReceive);
             require(safe == true, "Batch transfer failed");
         }
 
     }
 
     // Get minimum output tokens
-    function getAmountOutMin(address tokenIn,address tokenOut, uint256 amountIn) internal view returns (uint) {
+    function getAmountOutMin(address tokenIn,address tokenOut, uint256 amountIn) public returns (uint) {
 
         // Create the path of the swap
         address[] memory path;
 
         if(tokenIn == WETH || tokenOut == WETH){
-            path = new uint256[](2);
+            path = new address[](2);
             path[0] = tokenIn;
             path[1] = tokenOut;            
         }
         else{
-            path = new uint256[](3);
+            path = new address[](3);
             path[0] = tokenIn;
             path[1] = WETH;
             path[2] = tokenOut;   
@@ -253,12 +269,12 @@ contract BundleSwap{
         }
 
         // Call uniswap
-        uint[] memory amountOutMins = IUniswapV2Router(UNISWAP_V2_ROUTER).getAmountsOut(amountIn, path);
+        uint[] memory amountOutMins = IUniswapRouter(UNISWAP_V2_ROUTER).getAmountsOut(amountIn, path);
         return amountOutMins[path.length - 1];
     }
 
     // Sort token 
-    function sort(address token0, token1) internal pure returns(address,address){
+    function sort(address token0, address token1) internal pure returns(address,address){
         return token0<token1?(token0,token1):(token1,token0);
     }
 
