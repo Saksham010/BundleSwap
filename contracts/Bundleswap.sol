@@ -1,5 +1,7 @@
 pragma solidity 0.8.18;
 
+import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
+
 interface IERC20{
     // function transferFrom(address sender, address recipient, uint256 amount)external returns(bool);
     function approve(address spender, uint256 amount) external returns (bool);
@@ -27,7 +29,7 @@ interface IUniswapRouter{
 
 }
 
-contract BundleSwap{
+contract BundleSwap is AutomationCompatibleInterface{
     //Addresses
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address private constant WETH = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
@@ -45,6 +47,12 @@ contract BundleSwap{
     // Token0 => Token1 => AggregationTime
     mapping(address=>mapping(address => poolDetail)) pool;
 
+    // Poolid -> Token 0 and token1
+    struct tokenPair{
+        address token0;
+        address token1;
+    }
+    mapping(uint256=>tokenPair) poolPair;
 
     // Store user balances
     struct deposits{
@@ -58,6 +66,9 @@ contract BundleSwap{
     mapping(uint256 => address[]) userList;
     // Pool id => total amount
     mapping(uint256 => uint256) poolBalance;
+    // List of active pools id
+    uint256[] activePool;
+
 
 
     // Events
@@ -67,10 +78,17 @@ contract BundleSwap{
 
     // Create a new pool
     function createSwapPool(address tokenA, address tokenB,uint256 aggregationTime) internal{
-        // Create pool
-        pool[tokenA][tokenB] = poolDetail(counter,aggregationTime,block.timestamp);
         //Increment counter
         counter++;
+
+        // Create pool
+        pool[tokenA][tokenB] = poolDetail(counter,aggregationTime,block.timestamp);
+
+        // Create pool pair
+        poolPair[counter] = tokenPair(tokenA,tokenB);
+
+        // Register to list of active pool
+        activePool.push(counter);
 
         // Emit event
         emit poolCreated(tokenA,tokenB,aggregationTime);
@@ -214,9 +232,30 @@ contract BundleSwap{
         // Delete pool data
         delete pool[tokenA][tokenB];
         delete poolBalance[_poolId];
-        // delete balances; (requires loop)
+
+        // Delete balances;
+        address[] memory users = userList[_poolId];
+        for(uint i; i < users.length;i++){
+            delete balances[users[i]][_poolId];
+        }
+
+        // Delete userList
         delete userList[_poolId];
 
+        // Delete pool pair
+        delete poolPair[_poolId];
+
+        // Remove from active pool list
+        for(uint i; i < activePool.length; i++){
+            //Check whether the current id is the pool id or not
+            if(activePool[i] == _poolId){
+                //1. Overwrite the last element to this index
+                activePool[i] = activePool[activePool.length-1];
+                // 2. Remove the last index as it has been already copied
+                activePool.pop();
+            }
+        }
+        
         // Return amount of tokenB received from the swap
         return _outputAmount;
     }
@@ -279,4 +318,71 @@ contract BundleSwap{
     }
 
 
+    // Chainlink automation for bundleswap function
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    )
+        external
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory performData)
+    {
+        // List of expired pools
+        uint[] memory expiredPools = new uint[](activePool.length);
+        uint index = 0;
+        // List of active pools
+        for(uint256 i; i < activePool.length;i++){
+ 
+            // Get current pool id
+            uint256 _currPoolId = activePool[i];
+            // Check if the time for the current pool has expired or not
+            address _token0 = poolPair[_currPoolId].token0;
+            address _token1 = poolPair[_currPoolId].token1;
+
+            // Calculate the time passed since pool creation
+            uint256 timePassed = block.timestamp - pool[_token0][_token1].creationTime;
+            uint256 timeLimit = pool[_token0][_token1].aggregationTime;
+
+            // If the the pool time has expired, add to expired pool list
+            if(timeLimit < timePassed){
+                // Push the id tto the array
+                expiredPools[index] = _currPoolId;
+
+                // Increment index
+                index++;
+            }
+        
+        }
+
+        // Check if there were any expired pools 
+        if(expiredPools.length > 0){
+            // Set upkeepNeeded to true
+            upkeepNeeded = true;
+
+            // Encode the expired pool ids to perfrom data
+            performData = abi.encode(expiredPools);
+        }
+        return (upkeepNeeded,performData);
+    }
+
+    function performUpkeep(bytes calldata performData) external override {
+
+        // Decode the data passed by checkupkeep
+        uint[] memory expiredPools = abi.decode(performData,(uint[]));
+
+        for(uint256 i; i < expiredPools.length;i++){
+
+            // Get pair address 
+            address _token0 = poolPair[expiredPools[i]].token0;
+            address _token1 = poolPair[expiredPools[i]].token1;
+
+            // Get minimum out amount
+            uint256 minimumAmount = getAmountOutMin(_token0,_token1,poolBalance[i]);
+
+            //Execute bundleswap
+            bundleswap(_token0,_token1,minimumAmount);
+
+        }
+
+    }
 }

@@ -9,7 +9,7 @@ async function main() {
   console.log("Account1: ",account1.address);
   console.log("Account2 :", account2.address);
 
-  const BundleswapAddress = "0xc317A75Ab44D8f4459e36BFCb817068d5dB9a786";
+  const BundleswapAddress = "0xDAeA149DAFAe63E41665f5960e4a27D24CE1c1B4";
 
   const USDC_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
   const LINK_ADDRESS = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
@@ -23,7 +23,7 @@ async function main() {
   // // Approve token transfer for USDC and link for account 1 and account2
 // 
   console.log("Approving");
-  await  LINK1.approve(BundleswapAddress,ethers.utils.parseEther("12"));
+  await  LINK1.approve(BundleswapAddress,ethers.utils.parseEther("8"));
   await  LINK2.approve(BundleswapAddress,ethers.utils.parseEther("12"));
 
   console.log("Approved");
@@ -32,7 +32,7 @@ async function main() {
 
   console.log("Registering");
   
-  await BundleSwap1.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("12"),ethers.utils.parseEther("0"),300);
+  await BundleSwap1.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("8"),ethers.utils.parseEther("0"),300);
   await BundleSwap2.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("4"),0,300);
 
   console.log("Registered");
