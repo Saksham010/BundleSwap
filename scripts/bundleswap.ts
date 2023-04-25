@@ -14,26 +14,32 @@ async function main() {
 
     //Bundleswap contract instance  
     const BundleSwap = new ethers.Contract(BundleswapAddress,BundleSwapABI,account3);
+
+    // Check upkeep
+    const upkeep = await BundleSwap.checkUpkeep("0x");
+    console.log("Upkeep: ",upkeep);
     
+    // Perfom Upkeep
+    // await BundleSwap.performUpkeep(`${upkeep[1]}`);
     //Get pool id
-    console.log("Fetching pool id");
-    const poolId = await BundleSwap.getPoolId(LINK_ADDRESS,USDC_ADDRESS);
-    console.log("Pool id: ",poolId);
+    // console.log("Fetching pool id");
+    // const poolId = await BundleSwap.getPoolId(LINK_ADDRESS,USDC_ADDRESS);
+    // console.log("Pool id: ",poolId);
 
-    // Get pool balance 
-    console.log("Fetching pool balance");
-    const poolBalance = await BundleSwap.getPoolBalance(poolId);
-    console.log("Pool balance: ",poolBalance);
+    // // Get pool balance 
+    // console.log("Fetching pool balance");
+    // const poolBalance = await BundleSwap.getPoolBalance(poolId);
+    // console.log("Pool balance: ",poolBalance);
 
-    // Get amount minimum 
-    console.log("Fetching amount min");
-    const amountMin = await  BundleSwap.getAmountOutMin(LINK_ADDRESS,USDC_ADDRESS,poolBalance);
-    console.log("AmountMin: ",amountMin);
+    // // Get amount minimum 
+    // console.log("Fetching amount min");
+    // const amountMin = await  BundleSwap.getAmountOutMin(LINK_ADDRESS,USDC_ADDRESS,poolBalance);
+    // console.log("AmountMin: ",amountMin);
 
-    // Bundleswap
-    console.log("Swapping bundle of requests");
-    const USDC_AFTER_SWAP = await BundleSwap.bundleswap(LINK_ADDRESS,USDC_ADDRESS,amountMin.value);
-    console.log("Bundle swap successfull");
+    // // Bundleswap
+    // console.log("Swapping bundle of requests");
+    // const USDC_AFTER_SWAP = await BundleSwap.bundleswap(LINK_ADDRESS,USDC_ADDRESS,amountMin.value);
+    // console.log("Bundle swap successfull");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
