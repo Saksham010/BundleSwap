@@ -1,0 +1,33 @@
+.swapContainer{
+    /* border: 1px blue solid;; */
+    /* width: 70; */
+    margin: 0 auto;
+    padding: 10rem 39rem 0 39rem;
+    overflow: hidden;
+}
+
+
+.dexContainer{
+    border: 2px #d2d9ee solid;
+    background-color: #fff;
+    padding: 1rem 3.5rem;
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.dexHeader{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    background-color: white;
+}
+
+.dexinnerContainer{
+    background-color: #f5f6fc;
+}
+
+.dexDivider{
+    background-color: white;
+    border: 3px white solid;
+    border-radius: -30px;
+}

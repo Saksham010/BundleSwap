@@ -8,7 +8,7 @@ async function main() {
 
     console.log("Account3: ",account3.address);
 
-    const BundleswapAddress = "0xDAeA149DAFAe63E41665f5960e4a27D24CE1c1B4";
+    const BundleswapAddress = "0x5609A1968c88D013393832d1676de60e6A55848a";
     const USDC_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
     const LINK_ADDRESS = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
 
