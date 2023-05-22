@@ -8,8 +8,8 @@ async function main() {
 
   console.log("Account1: ",account1.address);
   console.log("Account2 :", account2.address);
-
-  const BundleswapAddress = "0xDAeA149DAFAe63E41665f5960e4a27D24CE1c1B4";
+  
+  const BundleswapAddress = "0x5609A1968c88D013393832d1676de60e6A55848a";
 
   const USDC_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
   const LINK_ADDRESS = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
@@ -32,8 +32,8 @@ async function main() {
 
   console.log("Registering");
   
-  await BundleSwap1.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("8"),ethers.utils.parseEther("0"),300);
-  await BundleSwap2.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("4"),0,300);
+  await BundleSwap1.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("8"),ethers.utils.parseEther("0"),100);
+  await BundleSwap2.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("4"),0,100);
 
   console.log("Registered");
 }

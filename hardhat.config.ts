@@ -9,7 +9,7 @@ const PRIVATE_KEY_THREE = String(process.env.PRIVATE_KEY_THREE);
 
 const config: HardhatUserConfig = {
   solidity: "0.8.18",
-  defaultNetwork: "hardhat",
+  defaultNetwork: "goerli",
   networks:{
     goerli:{
       url:`https://goerli.infura.io/v3/${INFURA_API_KEY}`,

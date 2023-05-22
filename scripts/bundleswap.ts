@@ -13,11 +13,11 @@ async function main() {
     const LINK_ADDRESS = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
 
     //Bundleswap contract instance  
-    const BundleSwap = new ethers.Contract(BundleswapAddress,BundleSwapABI,account3);
+    // const BundleSwap = new ethers.Contract(BundleswapAddress,BundleSwapABI,account3);
 
-    // Check upkeep
-    const upkeep = await BundleSwap.checkUpkeep("0x");
-    console.log("Upkeep: ",upkeep);
+    // // Check upkeep
+    // const upkeep = await BundleSwap.checkUpkeep("0x");
+    // console.log("Upkeep: ",upkeep);
     
     // Perfom Upkeep
     // await BundleSwap.performUpkeep(`${upkeep[1]}`);
@@ -40,6 +40,8 @@ async function main() {
     // console.log("Swapping bundle of requests");
     // const USDC_AFTER_SWAP = await BundleSwap.bundleswap(LINK_ADDRESS,USDC_ADDRESS,amountMin.value);
     // console.log("Bundle swap successfull");
+
+    
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -12,8 +12,6 @@ interface IERC20{
         address recipient,
         uint256 amount
     ) external returns (bool);
-
-
 }
 
 interface IUniswapRouter{
@@ -25,7 +23,7 @@ interface IUniswapRouter{
         uint deadline
     ) external returns (uint[] memory amounts);
 
-    function getAmountsOut(uint amountIn, address[] memory path) external returns (uint[] memory amounts);
+    function getAmountsOut(uint amountIn, address[] memory path) view external returns (uint[] memory amounts);
 
 }
 
@@ -289,7 +287,7 @@ contract BundleSwap is AutomationCompatibleInterface{
     }
 
     // Get minimum output tokens
-    function getAmountOutMin(address tokenIn,address tokenOut, uint256 amountIn) public returns (uint) {
+    function getAmountOutMin(address tokenIn,address tokenOut, uint256 amountIn) public view returns (uint) {
 
         // Create the path of the swap
         address[] memory path;
@@ -354,14 +352,15 @@ contract BundleSwap is AutomationCompatibleInterface{
         
         }
 
-        // Check if there were any expired pools 
-        if(expiredPools.length > 0){
-            // Set upkeepNeeded to true
-            upkeepNeeded = true;
 
-            // Encode the expired pool ids to perfrom data
-            performData = abi.encode(expiredPools);
+        // Check if there were any expired pools 
+        for(uint i; i < expiredPools.length;i++){
+            if(expiredPools[i] != 0){
+                upkeepNeeded = true;
+            }
         }
+
+        performData = abi.encode(expiredPools);
         return (upkeepNeeded,performData);
     }
 
@@ -371,18 +370,27 @@ contract BundleSwap is AutomationCompatibleInterface{
         uint[] memory expiredPools = abi.decode(performData,(uint[]));
 
         for(uint256 i; i < expiredPools.length;i++){
+            if(expiredPools[i]!= 0){
+                // Get pair address 
+                address _token0 = poolPair[expiredPools[i]].token0;
+                address _token1 = poolPair[expiredPools[i]].token1;
 
-            // Get pair address 
-            address _token0 = poolPair[expiredPools[i]].token0;
-            address _token1 = poolPair[expiredPools[i]].token1;
+                // Get minimum out amount
+                uint256 minimumAmount = getAmountOutMin(_token0,_token1,poolBalance[expiredPools[i]]);
 
-            // Get minimum out amount
-            uint256 minimumAmount = getAmountOutMin(_token0,_token1,poolBalance[i]);
+                //Execute bundleswap
+                bundleswap(_token0,_token1,minimumAmount);
 
-            //Execute bundleswap
-            bundleswap(_token0,_token1,minimumAmount);
-
+            }
         }
 
+    }
+
+    receive()external payable{
+
+    }
+
+    fallback()external payable{
+        
     }
 }
