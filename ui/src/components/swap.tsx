@@ -67,7 +67,6 @@ export default function Swap(){
                                 {({
                                     account,
                                     chain,
-                                    openAccountModal,
                                     openChainModal,
                                     openConnectModal,
                                     authenticationStatus,
