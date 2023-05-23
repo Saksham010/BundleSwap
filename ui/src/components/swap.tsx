@@ -1,5 +1,4 @@
 import "./swap.css";
-import arrowSVG from "../assets/arrow.svg";
 import {ConnectButton} from "@rainbow-me/rainbowkit";
 export default function Swap(){
     const ethLogoPath = "https://res.cloudinary.com/sushi-cdn/image/fetch/f_auto,fl_sanitize,q_auto,w_48/https://raw.githubusercontent.com/sushiswap/list/master/logos/native-currency-logos/ethereum.svg";
