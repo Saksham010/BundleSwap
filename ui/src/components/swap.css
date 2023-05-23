@@ -1,16 +1,19 @@
 .swapContainer{
     /* border: 1px blue solid;; */
     /* width: 70; */
+    width:32%;
     margin: 0 auto;
-    padding: 10rem 39rem 0 39rem;
-    overflow: hidden;
+    padding: 10rem 0rem 0rem 0rem;
+    
+    /* overflow: hidden; */
+    box-sizing:border-box;
 }
 
 
 .dexContainer{
     border: 2px #d2d9ee solid;
     background-color: #fff;
-    padding: 1rem 3.5rem;
+    padding: 1rem 3rem;
     border-radius: 7px;
     overflow: hidden;
 }
@@ -20,10 +23,12 @@
     align-items: baseline;
     justify-content: space-between;
     background-color: white;
+    padding:0rem 0.8rem;
 }
 
 .dexinnerContainer{
-    background-color: #f5f6fc;
+    /* background-color: #f5f6fc;
+    border-radius: 10px; */
 }
 
 .dexDivider{
@@ -31,3 +36,74 @@
     border: 3px white solid;
     border-radius: -30px;
 }
+
+.box{
+    /* border:1px red solid; */
+    border:1px #e4e7f0 solid;
+    background-color: #f5f6fc;
+    border-radius: 20px;
+    padding: 1rem 1rem 0rem 1rem;
+}
+
+.boxInner{
+    /* border: 1px green solid; */
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top:0.3rem;
+
+}
+
+.boxInner .boxInput {
+    /* border: 1px green solid; */
+    width: 90%;
+}
+
+.boxInner .boxInput input{
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.9em;
+    border: none;
+    background-color: #f5f6fc;
+    color:rgb(152,161,192);
+}
+.boxInner .boxInput input:focus{
+    outline: none;
+}
+
+.boxInner .tickerContainer{
+    /* border:1px yellow solid; */
+    width: 10%;
+    text-align: center;
+}
+
+
+/* Balance */
+.balance {
+    margin-top: 0;
+    /* padding: 0; */
+    /* border: 1px blue solid; */
+    text-align: right;
+    padding: 0rem 0.3rem 0.8rem 0;
+
+}
+
+.connectContainer button{
+    width: 100%;
+    text-align: center ;
+    /* padding: 1rem 2rem 2rem 2rem 2rem !important;    */
+    margin:1.5rem 0rem !important;
+    padding: 1.3rem 0rem !important;
+    font-size: 1.4em !important;
+    border: none;
+    border-radius: 20px;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-weight: 500;
+    color: white;
+    background-color: #ff329c;
+}
+.connectContainer button:hover{
+    opacity: 0.91;
+    cursor: pointer;
+}
+
