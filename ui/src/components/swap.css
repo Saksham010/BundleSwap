@@ -107,3 +107,106 @@
     cursor: pointer;
 }
 
+
+
+/* Ticker container */
+
+#secondTicker {
+    /* border:1px green solid; */
+    width: 40%;
+}
+.tickerContainer button{
+    border: 1px red solid;
+    width: 100%;
+    border:none;
+    border-radius: 20px;
+    background-color: #ff329c;
+    color:white;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items:center;
+    
+}
+.tickerContainer button:hover{
+    cursor: pointer;
+    opacity: 0.9;
+}
+
+.tickerContainer button h3{
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-size: 1.3em;
+    /* border:1px green solid; */
+}
+
+.svgContainer{
+    /* border:1px blue solid; */
+    align-items: center;
+}
+
+.svgContainer svg{
+    /* border:1px blue solid; */
+    
+}
+
+/* First ticker */
+
+#firstTicker{
+    width: 30%;
+    /* border:1px red solid; */
+    /* border-radius: 2px; */
+}
+
+#firstTicker button{
+    border-radius: 20px;
+    background-color: #E8ECFB;
+    color: black;
+    /* padding: 0rem 1rem 0rem 1rem; */
+
+}
+#firstTicker button:hover{
+    opacity: 0.8;
+}
+
+#firstTicker .svgContainer{
+    padding-left: 0.4rem;
+}
+#firstTicker .tickerlogoContainer{
+    width: 1.9rem;
+    padding-right: 0.3rem;
+    padding-top: 0.1rem;
+}
+#firstTicker button img{
+    /* border: 1px red solid; */
+    width: 100%;
+}
+
+/* Flip container */
+.flipIconContainer img{
+
+    fill: red;
+}
+
+.motionContainer{
+    border-radius: 12px;
+    height: 40px;
+    width: 40px;
+    position: relative;
+    margin: -18px auto;
+    background-color: #E8ECFB;
+    border:4px white solid;
+    z-index: 2;
+    transition: 0.2s all ease-in;
+}
+
+.motionContainer:hover{
+    cursor: pointer;
+    background-color: #e2e7fc;
+    padding-top: 4px;
+
+    
+}
+
+.motionContainer svg{
+    width: 100%;
+}
