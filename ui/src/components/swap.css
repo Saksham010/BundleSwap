@@ -3,7 +3,7 @@
     /* width: 70; */
     width:32%;
     margin: 0 auto;
-    padding: 10rem 0rem 0rem 0rem;
+    padding: 5rem 0rem 0rem 0rem;
     
     /* overflow: hidden; */
     box-sizing:border-box;
@@ -152,7 +152,7 @@
 /* First ticker */
 
 #firstTicker{
-    width: 30%;
+    width:35%;
     /* border:1px red solid; */
     /* border-radius: 2px; */
 }
@@ -181,8 +181,15 @@
     width: 100%;
 }
 
+#secondTicker {
+    width: 45%;
+    /* border: 1px green solid; */
+}
+
 /* Flip container */
 .flipIconContainer img{
+
+
 
     fill: red;
 }
