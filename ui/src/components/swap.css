@@ -160,7 +160,7 @@
 /* First ticker */
 
 #firstTicker{
-    width:11.6rem;
+    width:12rem;
     /* border:1px red solid; */
     /* border-radius: 2px; */
 }
@@ -190,7 +190,7 @@
 }
 
 #secondTicker {
-    width: 45%;
+    width: 17rem;
     /* border: 1px green solid; */
 }
 
