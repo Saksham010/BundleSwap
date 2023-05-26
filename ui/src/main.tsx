@@ -9,13 +9,12 @@ import {
   lightTheme,
 } from '@rainbow-me/rainbowkit';
 import { goerli,configureChains, createClient, WagmiConfig } from 'wagmi';
-import { publicProvider } from 'wagmi/providers/public';
-
+import { infuraProvider } from 'wagmi/providers/infura'
 
 
 const {chains, provider} = configureChains(
   [goerli],
-  [publicProvider()]
+  [infuraProvider({ apiKey: 'db8d01b28dbb4056bca2ae0790efa388' })]
 );
 
 

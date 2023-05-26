@@ -4,14 +4,18 @@ import TokenList from "./tokenlist";
 import { useState,useRef, useEffect } from "react";
 import SwapButton from "./swapButton";
 import { fetchBalance} from '@wagmi/core'
-import {useContractRead,useAccount} from 'wagmi';
-
+import { readContract } from '@wagmi/core'
+import ERC20ABI from "../../ABI/ERC20ABI";
+import { useAccount } from "wagmi";
+import { ethers } from "ethers";
 
 export default function Swap(){
     const ethLogoPath = "https://res.cloudinary.com/sushi-cdn/image/fetch/f_auto,fl_sanitize,q_auto,w_48/https://raw.githubusercontent.com/sushiswap/list/master/logos/native-currency-logos/ethereum.svg";
     const [showModal, setShowModal] = useState(false);
     const [searchFocused,setSearchFocused] = useState(false);
     const [activeModalId,setactiveModalId] = useState(0);
+    const [inputValue1,setInputValue1] = useState('');
+    const [inputValue2,setInputValue2] = useState('');
     const [selectedToken1,setSelectedToken1] = useState({
         name:'Ether',
         symbol:'ETH',
@@ -50,6 +54,9 @@ export default function Swap(){
     },[document.activeElement])
 
 
+    // console.log("Selected token1: ",selectedToken1);
+    // console.log("Selected token 2: ",selectedToken2);
+
     // Token selection box
     function tokenBox(modalId:number,logo:string,symbol:string,tickerDesign:string,balance:string){
         
@@ -58,7 +65,10 @@ export default function Swap(){
                 <div className="box">
                     <div className="boxInner">
                         <div className="boxInput">
-                            <input placeholder="0"></input>
+                            <input placeholder="0" value={modalId == 1? inputValue1:inputValue2} onChange={(event)=>{
+                                const data = event.target.value;
+                                modalId == 1? setInputValue1(data):setInputValue2(data);
+                            }}></input>
                         </div>
                         <div className="tickerContainer" id={tickerDesign}>
                             {tickerDesign=="firstTicker"?
@@ -99,7 +109,15 @@ export default function Swap(){
                             }
                         </div>
                     </div>
-                    <p className="balance ">Balance: {balance} </p>
+                    <div className="flex justify-between">
+
+                        <p className="pl-5 text-sm cursor-pointer font-medium hover:opacity-80 underline decoration-pink-800 text-pink-600" onClick={()=>{
+                            modalId == 1? setInputValue1(selectedToken1.balance):setInputValue2(selectedToken2.balance);
+                            
+                        }}>Max</p>
+                        <p className="balance ">Balance: {balance} </p>
+
+                    </div>
                 </div>
             </>
         )
@@ -114,70 +132,105 @@ export default function Swap(){
         },
       });
 
-    console.log("Account : ",account);
+    // console.log("Account : ",account);
 
 
+    async function setEthBalance(tickernumber:string){
+
+        const ethBalance = await fetchBalance({
+            address:`${account.address}`,
+        });
+
+        if(tickernumber == '1'){
+
+            setSelectedToken1((obj)=>{
+                return{
+                    ...obj,
+                    balance:ethBalance.formatted.slice(0,8)
+                }
+            })
+        }
+        else if(tickernumber == '2'){
+            setSelectedToken2((obj)=>{
+                return{
+                    ...obj,
+                    balance:ethBalance.formatted.slice(0,8)
+                }
+            })
+        }
+
+    }
+
+    async function setTokenBalance(tickernumber:string) {
+        const addr:string = tickernumber == '1'?selectedToken1.address:selectedToken2.address;
+        const tokenBalance = await readContract({
+            address:addr,
+            abi:ERC20ABI,
+            functionName:`balanceOf`,
+            args: [`${account.address}`],
+
+        });
+        const parsedValue = ethers.utils.formatEther(tokenBalance).slice(0,8);
+
+        if(tickernumber == '1'){
+
+            setSelectedToken1((obj)=>{
+                return{
+                    ...obj,
+                    balance:parsedValue
+                }
+            })
+        }
+        else if(tickernumber == '2'){
+            setSelectedToken2((obj)=>{
+                return{
+                    ...obj,
+                    balance:parsedValue
+                }
+            })
+        }
+
+        
+    }
 
     // Fetch balance of the connected account
     async function getBalance(){
         // Check if the account is connected or not
         if(account.isConnected){
             // Read balance of the token 1 
-            
             // Check if the token 1 is ETH
             if(selectedToken1.name == 'Ether'){
-                const ethBalance = await fetchBalance({
-                    address:'0xb38274154EfB3724000EFA642F1c9929e6413BD8',
-                });
-                console.log("Eth balance: ",ethBalance);
-    
-                setSelectedToken1((obj)=>{
-                    return{
-                        ...obj,
-                        balance:ethBalance.formatted
-                    }
-                })
+
+                setEthBalance('1');
     
             }
             else{
-                const tokenBalance = await fetchBalance({
-                    address:selectedToken1.address,
-                });
-                console.log("Token1 balance: ",tokenBalance);
-    
-                setSelectedToken1((obj)=>{
-                    return{
-                        ...obj,
-                        balance:tokenBalance.formatted
-                    }
-                })
-
+                setTokenBalance('1');
             }
 
             // For token2
             // Check if token is selected or not
             if(selectedToken2.name != 'Select token'){
-                const tokenBalance = await fetchBalance({
-                    address:selectedToken2.address
-                });
 
-                console.log("token 2 balance: ",tokenBalance);
-                setSelectedToken2((obj)=>{
-                    return{
-                        ...obj,
-                        balance:tokenBalance.formatted
-                    }
-                })
+                // Check if the token 2 is ETH
+                if(selectedToken2.name == 'Ether'){
+                    setEthBalance('2');        
+                }
+                else{
+
+                    setTokenBalance('2');
+                }
             }
     
         }
     }
 
     useEffect(()=>{
-        getBalance();
-    },[isConnected])
+        if(showModal == false){
+            getBalance();
+        }
+    },[isConnected,showModal])
 
-    // getBalance();
 
 
     return (
@@ -275,7 +328,16 @@ export default function Swap(){
 
                             {/*body*/}
                             <div className="relative pt-6 flex-auto">
-                                <TokenList skeleton={searchFocused} closeModal={()=>{setShowModal((value)=>{return !value})}} searchedToken={searchedToken} modalId={activeModalId} updateToken1={(data)=>{setSelectedToken1((obj)=>{return{...obj,...data}})}} updateToken2={(data)=>{setSelectedToken2((obj)=>{return{...obj,...data}})}}/>
+                                <TokenList 
+                                skeleton={searchFocused} 
+                                closeModal={()=>{setShowModal((value)=>{return !value})}} 
+                                searchedToken={searchedToken} 
+                                modalId={activeModalId} 
+                                updateToken1={(data)=>{setSelectedToken1((obj)=>{return{...obj,...data}})}} 
+                                updateToken2={(data)=>{setSelectedToken2((obj)=>{return{...obj,...data}})}}
+                                token1= {selectedToken1}
+                                token2={selectedToken2}
+                                />
   
                             </div>
                         </div>
