@@ -85,20 +85,20 @@ export default function Swap(){
                                 modalId == 1? setInputValue1(data):setInputValue2(data);
                             }}></input>
                         </div>
-                        <div className="tickerContainer" id={tickerDesign}>
+                        <div className="tickerContainer " id={tickerDesign} >
                             {tickerDesign=="firstTicker"?
                                 <button onClick={()=>{
                                     setShowModal(!showModal);
                                     setactiveModalId(modalId);
                                     }} >
                                     
-                                    <div className="tickerwrapper flex py-2 pl-1">
-                                        <div className="tickerlogoContainer ">
+                                    <div className="tickerwrapper py-2  ">
+                                        <div className="tickerlogoContainer border  ">
                                             <img src={logo}></img>
                                         </div>
-                                        <h3 className="text-sm pt-1 pl-1 font-medium antialiased">{symbol}</h3>
-                                        <div className="svgContainer">
-                                            <svg width="30" height="30" version="1.1" viewBox="70 130 450 300" fill="black" xmlns="http://www.w3.org/2000/svg">
+                                        <h3 className="text-sm pt-1 pl-1 font-medium antialiased ">{symbol}</h3>
+                                        <div className="svgContainer pl-2 ">
+                                            <svg width="30" height="30" version="1.1" viewBox="70 110 450 300" fill="black" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="m277.89 214.98c-3.6953-5.2773-10.969-6.5625-16.246-2.8672-5.2773 3.6953-6.5625 10.969-2.8672 16.246l81.664 116.67c4.6484 6.6367 14.473 6.6367 19.117 0l81.668-116.67c3.6953-5.2773 2.4102-12.551-2.8672-16.246-5.2812-3.6953-12.555-2.4102-16.25 2.8672l-72.109 103.01z"/>
                                             </svg>
                                         </div>

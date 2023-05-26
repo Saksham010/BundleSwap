@@ -113,24 +113,31 @@
 
 #secondTicker {
     /* border:1px green solid; */
-    width: 40%;
+    width: 16rem;
 }
+
+.tickerwrapper{
+    /* border: 1px black solid; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .tickerContainer button{
-    border: 1px red solid;
+    /* border: 1px red solid; */
     width: 100%;
     border:none;
     border-radius: 20px;
     background-color: #ff329c;
     color:white;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items:center;
-    
+    padding: 0;    
 }
 .tickerContainer button:hover{
     cursor: pointer;
     opacity: 0.9;
+}
+.tickerlogoContainer{
+    /* border: 1px red solid; */
 }
 
 .tickerContainer button h3{
@@ -142,6 +149,7 @@
 .svgContainer{
     /* border:1px blue solid; */
     align-items: center;
+    
 }
 
 .svgContainer svg{
@@ -152,7 +160,7 @@
 /* First ticker */
 
 #firstTicker{
-    width:35%;
+    width:11.6rem;
     /* border:1px red solid; */
     /* border-radius: 2px; */
 }
@@ -169,7 +177,7 @@
 }
 
 #firstTicker .svgContainer{
-    padding-left: 0.4rem;
+    /* padding-left: 0.4rem; */
 }
 #firstTicker .tickerlogoContainer{
     width: 1.9rem;
