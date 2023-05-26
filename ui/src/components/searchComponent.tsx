@@ -5,28 +5,36 @@ export default function SearchComponent(props:any) {
 
     const[address,setAddress] = useState('');
 
-    // Check if the address is correct or not
-    const isCorrectAddress:boolean = ethers.utils.isAddress(address);
-    if(isCorrectAddress){
-        const token = fetchToken({
-            address:address
-        });
-        token.then((obj)=>{
-            let name = obj.name;
-            let symbol = obj.symbol;
+    function getToken(){
+        // Check if the address is correct or not
+        const isCorrectAddress:boolean = ethers.utils.isAddress(address);
+        // console.log("Address: ",typeof(address));
 
-            props.setSearchData({name:name,symbol:symbol,address:address})
-
-        }).catch((err)=>{
-            console.log("Error in fetching token: ",err);
-        });
+        if(isCorrectAddress){
+            // For typescript
+            const token = fetchToken({
+                address:ethers.utils.getAddress(address),
+            });
+            token.then((obj)=>{
+                let name = obj.name;
+                let symbol = obj.symbol;
+    
+                props.setSearchData({name:name,symbol:symbol,address:address})
+    
+            }).catch((err)=>{
+                console.log("Error in fetching token: ",err);
+            });
+        }
     }
+
 
     useEffect(()=>{
         if(address == ''){
             props.setSearchData({name:'',symbol:'',address:''});
             
         }
+
+        getToken();
     },[address])
     
 

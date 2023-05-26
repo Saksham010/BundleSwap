@@ -7,9 +7,7 @@ export default function Header(){
                 <h1 className="text-4xl font-semibold">BundleSwap</h1>
                 {/* <h1>BundleSwap</h1> */}
                 <div className="headerConnect">
-                    <ConnectButton   onConnectChange={({ isConnected, data }) => {
-                            console.log("Connected") }}
-                    />
+                    <ConnectButton/>
                 </div>
             </div>
         </>

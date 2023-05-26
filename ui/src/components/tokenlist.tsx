@@ -21,6 +21,9 @@ export default function TokenList(props:any){
         LINK:linkLogoPath
     }
 
+    // Type of keys of logolist
+    type Keys = keyof typeof logoList;
+
     // Searched token list
     let searchedToken = props.searchedToken;
 
@@ -107,9 +110,10 @@ export default function TokenList(props:any){
         let path:string = ethLogoPath;
         // Check if the logo exists 
         const keyarr = Object.keys(logoList);
-        keyarr.map((key:string)=>{
-            if(searchedToken.symbol == key){
-                path = logoList[key];
+        keyarr.map((key:any)=>{
+            const index:Keys = key;
+            if(searchedToken.symbol == index){
+                path = logoList[index]; 
             }
         })
 

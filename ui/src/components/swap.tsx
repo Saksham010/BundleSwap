@@ -5,7 +5,7 @@ import { useState,useRef, useEffect } from "react";
 import SwapButton from "./swapButton";
 import { fetchBalance} from '@wagmi/core'
 import { readContract } from '@wagmi/core'
-import ERC20ABI from "../../ABI/ERC20ABI";
+import ERC20ABI from "../../ABI/ERC20ABI.json";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
 
@@ -43,6 +43,21 @@ export default function Swap(){
     type tokendata ={
         name:string;
         symbol:string;
+        address:string;
+    }
+    type choosenToken = {
+        name:string;
+        symbol:string;
+        address:string;
+        logo:string;
+        balance:string;
+
+    }
+    type updatedToken = {
+        name:string;
+        symbol:string;
+        address:string;
+        logo:string;
     }
     // Skeleton token list on search select
     useEffect(()=>{
@@ -136,40 +151,46 @@ export default function Swap(){
 
 
     async function setEthBalance(tickernumber:string){
+        if(account.address != undefined){
 
-        const ethBalance = await fetchBalance({
-            address:`${account.address}`,
-        });
-
-        if(tickernumber == '1'){
-
-            setSelectedToken1((obj)=>{
-                return{
-                    ...obj,
-                    balance:ethBalance.formatted.slice(0,8)
-                }
-            })
-        }
-        else if(tickernumber == '2'){
-            setSelectedToken2((obj)=>{
-                return{
-                    ...obj,
-                    balance:ethBalance.formatted.slice(0,8)
-                }
-            })
+            const addr:string= account.address;
+            const ethBalance = await fetchBalance({
+                address:ethers.utils.getAddress(addr),
+            });
+    
+            if(tickernumber == '1'){
+    
+                setSelectedToken1((obj)=>{
+                    return{
+                        ...obj,
+                        balance:ethBalance.formatted.slice(0,8)
+                    }
+                })
+            }
+            else if(tickernumber == '2'){
+                setSelectedToken2((obj)=>{
+                    return{
+                        ...obj,
+                        balance:ethBalance.formatted.slice(0,8)
+                    }
+                })
+            }
         }
 
     }
 
     async function setTokenBalance(tickernumber:string) {
         const addr:string = tickernumber == '1'?selectedToken1.address:selectedToken2.address;
-        const tokenBalance = await readContract({
-            address:addr,
+
+        const tokenBalance:any = await readContract({
+            address:ethers.utils.getAddress(addr),
             abi:ERC20ABI,
             functionName:`balanceOf`,
             args: [`${account.address}`],
 
         });
+
+        
         const parsedValue = ethers.utils.formatEther(tokenBalance).slice(0,8);
 
         if(tickernumber == '1'){
@@ -225,6 +246,33 @@ export default function Swap(){
         }
     }
 
+    function flipTickerData(){
+        const box1 = selectedToken1;
+
+        // Update selectedtoken1 with selectedtoken2 data
+        setSelectedToken1((obj)=>{
+            return{
+                ...obj,
+                ...selectedToken2
+            }
+        });
+
+        // Update selectedtoken2 with selectedtoken1 data
+        setSelectedToken2((obj)=>{
+            return{
+                ...obj,
+                ...box1,
+            }
+        })
+
+        // Flip input box data
+        const input1 = inputValue1;
+        setInputValue1(inputValue2);
+        setInputValue2(input1);
+
+
+    }
+
     useEffect(()=>{
         if(showModal == false){
             getBalance();
@@ -247,7 +295,7 @@ export default function Swap(){
                         {/* First ticker box */}
                         {tokenBox(1,selectedToken1.logo,selectedToken1.symbol,"firstTicker",selectedToken1.balance)}
                         <div className="dexDivider"></div>
-                        <div className="motionContainer" >
+                        <div className="motionContainer " onClick={flipTickerData} >
                             <div className="flipIconContainer">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="17" height="20" viewBox="0 -5 23 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>            
 
@@ -316,8 +364,10 @@ export default function Swap(){
                                 {/* Search bar */}
                                 <SearchComponent search={(value:boolean)=>{
                                     setSearchFocused(value);
-                                }} reference={ref} setSearchData={(value:tokendata)=>{
-                                    setSearchedToken((obj):tokendata=>{
+                                }} 
+                                reference={ref} 
+                                setSearchData={(value:tokendata)=>{
+                                    setSearchedToken((obj:tokendata)=>{
                                         return{
                                             ...obj,
                                             ...value,
@@ -333,8 +383,8 @@ export default function Swap(){
                                 closeModal={()=>{setShowModal((value)=>{return !value})}} 
                                 searchedToken={searchedToken} 
                                 modalId={activeModalId} 
-                                updateToken1={(data)=>{setSelectedToken1((obj)=>{return{...obj,...data}})}} 
-                                updateToken2={(data)=>{setSelectedToken2((obj)=>{return{...obj,...data}})}}
+                                updateToken1={(data:updatedToken)=>{setSelectedToken1((obj:choosenToken)=>{return{...obj,...data}})}} 
+                                updateToken2={(data:updatedToken)=>{setSelectedToken2((obj:choosenToken)=>{return{...obj,...data}})}}
                                 token1= {selectedToken1}
                                 token2={selectedToken2}
                                 />
