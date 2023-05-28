@@ -25,6 +25,11 @@ interface IUniswapRouter{
 
     function getAmountsOut(uint amountIn, address[] memory path) view external returns (uint[] memory amounts);
 
+    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
+    external
+    payable
+    returns (uint[] memory amounts);
+
 }
 
 contract BundleSwap is AutomationCompatibleInterface{
@@ -44,6 +49,7 @@ contract BundleSwap is AutomationCompatibleInterface{
 
     // Token0 => Token1 => AggregationTime
     mapping(address=>mapping(address => poolDetail)) pool;
+    mapping(address=>poolDetail) fromEthpool; //Token2 => aggregation time  (FOR ETH)
 
     // Poolid -> Token 0 and token1
     struct tokenPair{
@@ -51,6 +57,10 @@ contract BundleSwap is AutomationCompatibleInterface{
         address token1;
     }
     mapping(uint256=>tokenPair) poolPair;
+
+    //Poolid -> tokenB
+    mapping(uint256=>address) fromEthPoolPair;
+
 
     // Store user balances
     struct deposits{
@@ -71,8 +81,12 @@ contract BundleSwap is AutomationCompatibleInterface{
 
     // Events
     event poolCreated(address,address,uint256);
+    event fromEthPoolCreated(address,uint256);
     event tokenDeposited(uint id,address sender, address tokenIn, address tokenOut, uint256 amount);
+    event ethDeposited(uint id, address sender, address tokenOut, uint256 amount);
     event swapReceipt(uint id, address tokenIn, address tokenOut, uint256 inAmount, uint256 outAmount);
+    event fromEthSwapReceipt(uint id, address tokenOut, uint256 inAmount, uint256 outAmount);
+    
 
     // Create a new pool
     function createSwapPool(address tokenA, address tokenB,uint256 aggregationTime) internal{
@@ -92,10 +106,33 @@ contract BundleSwap is AutomationCompatibleInterface{
         emit poolCreated(tokenA,tokenB,aggregationTime);
     }
 
+    // Create a pool from eth
+    function fromEthCreateSwapPool(address tokenB, uint256 aggregationTime) internal{
+        //Increment counter
+        counter++;
+
+        // Create a pool
+        fromEthpool[tokenB] = poolDetail(counter,aggregationTime,block.timestamp);
+
+        // Create a pool pair
+        fromEthPoolPair[counter] = tokenB;
+
+        // Register to list of active pools
+        activePool.push(counter);
+
+        // Emit event
+        emit fromEthPoolCreated(tokenB,aggregationTime);
+    }
+
     //Get pool id 
     function getPoolId(address token0, address token1) public view returns(uint256){
         return pool[token0][token1].id;
     } 
+
+    // Get eth pool id
+    function getEthPoolId(address tokenB) public view returns(uint256){
+        return fromEthpool[tokenB].id;
+    }
 
     //Get pool balance 
     function getPoolBalance(uint256 id) public view returns(uint256){
@@ -106,6 +143,39 @@ contract BundleSwap is AutomationCompatibleInterface{
     function approveToken(address _token,uint256 amount) public {
         bool safe = IERC20(_token).approve(address(this),amount);
         require(safe == true, "Token not approved");
+    }
+
+    // Register swap request from eth to another token
+    function registerSwapFromETHToToken(address tokenB,uint256 amountB, uint256 aggregationTime) payable public{
+        // Amount of eth sent to register
+        uint256 amountA = msg.value;
+
+        // Check if the pool exists or not
+        if(fromEthpool[tokenB].creationTime == 0){
+            // If does not exits create a pool
+            fromEthCreateSwapPool(tokenB,aggregationTime);
+        }
+        else{
+            // If the pool already exists
+            // Check aggregation time
+            uint256 timeElapsed = block.timestamp - fromEthpool[tokenB].creationTime;
+            require(timeElapsed < fromEthpool[tokenB].aggregationTime, "Cannot deposit after pool time expired. Create a new pool");
+        }
+
+        // Pool balance store
+        uint256 poolId = getEthPoolId(tokenB);
+
+        // Update the amount of tokens deposited by the user
+        balances[msg.sender][poolId].token0amount += amountA;
+        balances[msg.sender][poolId].token1amount += amountB;
+
+        // Update user list and pool balance
+        registerSender(msg.sender,poolId);
+        poolBalance[poolId] += amountA;
+
+        // Emit event of token deposit
+        emit ethDeposited(poolId,msg.sender,tokenB,amountA);
+
     }
 
     // Register swap request (TokenA => TokenB)  (Note amount in 18 decimal precision)
@@ -123,50 +193,31 @@ contract BundleSwap is AutomationCompatibleInterface{
             // If does not exist create a pool
             createSwapPool(_token0,_token1,aggregationTime);
 
-            // Pool balance store
-            uint256 poolId = getPoolId(_token0,_token1);    
-
-            // Update the amount of tokens deposited by the user
-            balances[msg.sender][poolId].token0amount += _amount0;
-            balances[msg.sender][poolId].token1amount += _amount1;
-
-            // Update user list and pool balance
-            registerSender(msg.sender,poolId);
-            poolBalance[poolId] += _amount0;
-
-            // Transfer Token A and Token B to the contract
-            bool success = IERC20(_token0).transferFrom(msg.sender,address(this),_amount0);
-            require(success == true,"Token0 transfer failed");
-
-            // Emit event
-            emit tokenDeposited(poolId,msg.sender,_token0,_token1,_amount0);
-
         } 
         else{
             // If the pool already exists
-
             // Check aggregation time
             uint256 timeElapsed = block.timestamp - pool[_token0][_token1].creationTime;
             require(timeElapsed < pool[_token0][_token1].aggregationTime, "Cannot deposit after pool time expired. Create a new pool");
-
-            // Pool balance store
-            uint256 poolId = getPoolId(_token0,_token1);  
-
-            // Update the amount of tokens deposited by the user
-            balances[msg.sender][poolId].token0amount += _amount0;
-            balances[msg.sender][poolId].token1amount += _amount1;
-
-            // Update user list and pool balance
-            registerSender(msg.sender,poolId);
-            poolBalance[poolId] += _amount0;
-
-            // Transfer Token A and Token B to the contract
-            IERC20(_token0).transferFrom(msg.sender,address(this),_amount0);
-            // require(safe == true,"Token0 transfer failed");
-
-            // Emit event
-            emit tokenDeposited(poolId,msg.sender,_token0,_token1,_amount0);
         }
+
+        // Pool balance store
+        uint256 poolId = getPoolId(_token0,_token1);    
+
+        // Update the amount of tokens deposited by the user
+        balances[msg.sender][poolId].token0amount += _amount0;
+        balances[msg.sender][poolId].token1amount += _amount1;
+
+        // Update user list and pool balance
+        registerSender(msg.sender,poolId);
+        poolBalance[poolId] += _amount0;
+
+        // Transfer Token A to the contract
+        bool success = IERC20(_token0).transferFrom(msg.sender,address(this),_amount0);
+        require(success == true,"Token0 transfer failed");
+
+        // Emit event
+        emit tokenDeposited(poolId,msg.sender,_token0,_token1,_amount0);
     }
 
     // Register user address for a pool 
@@ -185,6 +236,67 @@ contract BundleSwap is AutomationCompatibleInterface{
         if(!exist){
             userList[poolId].push(caller);
         }
+
+    }
+
+    // Bundleswap from ETH
+    function bundleswapFromEth(address tokenB,uint256 amountOutmin) public returns(uint256){
+        // Check if the pool exists or not
+        require(fromEthpool[tokenB].creationTime != 0, "Pool does not exits to perfrom bundleswap");
+
+        // Check if the pool has expired or not
+        uint256 timeDiff = block.timestamp - fromEthpool[tokenB].creationTime;
+        require(fromEthpool[tokenB].aggregationTime < timeDiff,"Time has not expired. Wait for the pool time to expire");
+
+        // Get pool id
+        uint256 _poolId = getEthPoolId(tokenB);            
+        uint256 _tokenBalance = getPoolBalance(_poolId);   
+
+        // Define path
+        address[] memory path;
+        path = new address[](2);
+        path[0] = WETH;
+        path[2] = tokenB;        
+
+        //Swap tokens
+        uint[] memory amounts = IUniswapRouter(UNISWAP_V2_ROUTER).swapExactETHForTokens{value: _tokenBalance}(amountOutmin,path,address(this),block.timestamp);
+        uint256 _outputAmount = amounts[1];
+
+        //Emit event
+        emit fromEthSwapReceipt(_poolId,tokenB,_tokenBalance,_outputAmount);
+
+        // Return the token to the respective depositors
+        batchTransfer(_poolId,tokenB,_outputAmount);
+
+        // Delete pool data
+        delete fromEthpool[tokenB];
+        delete poolBalance[_poolId];
+
+        // Delete balances;
+        address[] memory users = userList[_poolId];
+        for(uint i; i < users.length;i++){
+            delete balances[users[i]][_poolId];
+        }
+
+        // Delete userList
+        delete userList[_poolId];
+
+        // Delete pool pair
+        delete fromEthPoolPair[_poolId];
+
+        // Remove from active pool list
+        for(uint i; i < activePool.length; i++){
+            //Check whether the current id is the pool id or not
+            if(activePool[i] == _poolId){
+                //1. Overwrite the last element to this index
+                activePool[i] = activePool[activePool.length-1];
+                // 2. Remove the last index as it has been already copied
+                activePool.pop();
+            }
+        }
+        
+        // Return amount of tokenB received from the swap
+        return _outputAmount;
 
     }
 
@@ -225,7 +337,7 @@ contract BundleSwap is AutomationCompatibleInterface{
         emit swapReceipt(_poolId,tokenA,tokenB,_tokenBalance,_outputAmount);
 
         // Return the token to the respective depositors
-        batchTransfer(userList[_poolId],_poolId,tokenB,_outputAmount);
+        batchTransfer(_poolId,tokenB,_outputAmount);
 
         // Delete pool data
         delete pool[tokenA][tokenB];
@@ -259,7 +371,7 @@ contract BundleSwap is AutomationCompatibleInterface{
     }
 
     // Return swapped tokens to the depositors
-    function batchTransfer(address[] memory recepients,uint256 poolId, address outputToken,uint256 outAmount) internal returns(bool){
+    function batchTransfer(uint256 poolId, address outputToken,uint256 outAmount) internal returns(bool){
         // Address list
         address[] memory addressList = userList[poolId];
         uint256 length = userList[poolId].length;
