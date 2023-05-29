@@ -1,6 +1,7 @@
 import { ethers } from "hardhat";
 import ERC20ABI from "../ABI/ERC20ABI.json"
 import BundleSwapABI from "../ABI/Bundleswapbi.json";
+import { parseEther } from "ethers/lib/utils";
 
 async function main() {
 
@@ -11,29 +12,33 @@ async function main() {
   
   const BundleswapAddress = "0x95f62D72dDB6c82105F2832Fb2bE6CF633416B19";
 
-  const USDC_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
   const LINK_ADDRESS = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
+
 
   const LINK1 = new ethers.Contract(LINK_ADDRESS,ERC20ABI,account1);
   const LINK2 = new ethers.Contract(LINK_ADDRESS,ERC20ABI,account2);
 
+
   const BundleSwap1 = new ethers.Contract(BundleswapAddress,BundleSwapABI,account1);
   const BundleSwap2 = new ethers.Contract(BundleswapAddress,BundleSwapABI,account2);
 
-  // // Approve token transfer for USDC and link for account 1 and account2
-// 
-  console.log("Approving");
-  await  LINK1.approve(BundleswapAddress,ethers.utils.parseEther("8"));
-  await  LINK2.approve(BundleswapAddress,ethers.utils.parseEther("12"));
+  // // Approve token transfer for LINK for account 1 and account2
+    // 
+    console.log("Approving");
+    const aptx = await  LINK1.approve(BundleswapAddress,ethers.utils.parseEther("450"));
+    await aptx.wait();
+    const aptx2 = await  LINK2.approve(BundleswapAddress,ethers.utils.parseEther("240"));
+    await aptx2.wait();
 
-  console.log("Approved");
 
-  // // Swap from Chainlink to USDC => 12 chainlink --> 0 usdc for 5mins(300)  
+    console.log("Approved");
 
   console.log("Registering");
   
-  await BundleSwap1.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("8"),ethers.utils.parseEther("0"),100);
-  await BundleSwap2.registerSwap(LINK_ADDRESS,USDC_ADDRESS,ethers.utils.parseEther("4"),0,100);
+  const tx = await BundleSwap1.registerSwapFromTokentoEth(LINK_ADDRESS,parseEther("450"),100);
+  await tx.wait();
+  const tx2 = await BundleSwap2.registerSwapFromTokentoEth(LINK_ADDRESS,parseEther("240"),100);
+  await tx2.wait();
 
   console.log("Registered");
 }

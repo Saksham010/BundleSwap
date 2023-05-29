@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
 import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
@@ -170,6 +171,9 @@ contract BundleSwap is AutomationCompatibleInterface{
 
     // Register swap request from eth to another token
     function registerSwapFromETHToToken(address tokenB,uint256 amountB, uint256 aggregationTime) payable public{
+
+        require(msg.value != 0,"Cannot register for 0 eth");
+
         // Amount of eth sent to register
         uint256 amountA = msg.value;
 
@@ -203,6 +207,8 @@ contract BundleSwap is AutomationCompatibleInterface{
 
     // Regsiter swap request from another token to eth
     function registerSwapFromTokentoEth(address tokenA, uint256 amountA, uint256 aggregationTime) payable public{
+        require(amountA != 0 ,"Cannot register for 0 tokens");
+
         uint256 amountB = msg.value;
 
         // Check if the pool exits or not
@@ -227,6 +233,10 @@ contract BundleSwap is AutomationCompatibleInterface{
         // Update user list and pool balance
         registerSender(msg.sender,poolId);
         poolBalance[poolId] += amountA;
+
+        // Transfer Token A to the contract
+        bool success = IERC20(tokenA).transferFrom(msg.sender,address(this),amountA);
+        require(success == true,"Token0 transfer failed");
 
         // Emit event of token deposit
         emit toEthTokenDeposited(poolId,msg.sender,tokenA,amountA);
