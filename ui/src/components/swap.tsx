@@ -317,7 +317,7 @@ export default function Swap(){
                         }
 
                         {/* Swap button */}
-                        <SwapButton/>
+                        <SwapButton token1={selectedToken1} token2={selectedToken2} input1={inputValue1} input2={inputValue2}/>
 
                     </div>
 

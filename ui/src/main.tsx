@@ -1,7 +1,6 @@
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-
 import '@rainbow-me/rainbowkit/styles.css';
 import {
   getDefaultWallets,
@@ -29,13 +28,14 @@ const wagmiClient = createClient({
 });
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <WagmiConfig client={wagmiClient} >
-    <RainbowKitProvider chains={chains} theme={
-      lightTheme({
-        accentColor:'#FF329C'
-      })
-    }>
-      <App/>
-    </RainbowKitProvider>
-  </WagmiConfig>
+    <WagmiConfig client={wagmiClient} >
+      <RainbowKitProvider chains={chains} theme={
+        lightTheme({
+          accentColor:'#FF329C'
+        })
+      }>
+        <App/>
+      </RainbowKitProvider>
+    </WagmiConfig>
+
 )
